@@ -14,7 +14,9 @@ end
 
 $CFLAGS << " -W -Wall"
 
-if have_library("avformat") and find_header('libavformat/avformat.h') then
+if 
+    have_library("avformat") and find_header('libavformat/avformat.h') and
+    have_library("libavutil") and find_header('libavutil/log.h')  then
     $objs = %w(segmenter.o)
     create_makefile("segmenter_ext")
 else

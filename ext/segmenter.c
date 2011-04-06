@@ -8,6 +8,7 @@
 
 #include "ruby.h"
 #include "libavformat/avformat.h"
+#include "libavutil/log.h"
 
 static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStream *input_stream) {
     AVCodecContext *input_codec_context;
@@ -162,10 +163,14 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     VALUE sArray = rb_ary_new();
 
     av_register_all();
+    av_log_set_level(AV_LOG_PANIC);
 
     input = RSTRING_PTR(input_);
     output_prefix = RSTRING_PTR(output_prefix_);
     segment_duration = (FIX2LONG(duration_) - 1);
+    
+    //stdout = NULL;
+    stderr = NULL;
     
     remove_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
     if (!remove_filename) {
@@ -301,10 +306,6 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
             
             rb_ary_push(sArray, seg);
-            
-            //if (write_index) {
-            //    write_index = !write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, ++last_segment, 0, max_tsfiles);
-            //}
             
             if (remove_file) {
                 snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
