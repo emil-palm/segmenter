@@ -84,7 +84,7 @@ static VALUE rb_cAvSegment;
 
 static void segment_free(Segment *segment)
 {
-
+    fprintf(stderr,"Dealloc");
     if (NULL == segment)
         return;
     
@@ -97,34 +97,8 @@ static void segment_free(Segment *segment)
 static VALUE segment_allocate (VALUE klass)
 {
     
-    Segment *s = ALLOC(Segment);
-    s->duration = 0;
-    s->index = 0;
-    s->filename = NULL;    
+    Segment *s = ALLOC(Segment);  
 	return Data_Wrap_Struct (klass, NULL, segment_free, s);
-}
-
-static VALUE segment_init(VALUE self, VALUE index, VALUE duration, VALUE filename)
-{
-    rb_iv_set(self, "@index", index);
-    rb_iv_set(self, "@duration", duration);
-    rb_iv_set(self, "@filename", filename);
-    return self;
-}
-
-/* Segmenter */
-
-static VALUE segmenter_add_segment(VALUE self,VALUE segment)
-{
-    
-    
-    if ( NIL_P(rb_iv_get(self,"@segments")) )
-    {
-        rb_iv_set(self,"@segments",rb_ary_new());
-    }
-    
-    VALUE sArray = rb_iv_get(self,"@segments");
-    return rb_ary_push(sArray, segment);
 }
 
 static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, VALUE duration_ ) {
@@ -168,9 +142,6 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     input = RSTRING_PTR(input_);
     output_prefix = RSTRING_PTR(output_prefix_);
     segment_duration = (FIX2LONG(duration_) - 1);
-    
-    //stdout = NULL;
-    stderr = NULL;
     
     remove_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
     if (!remove_filename) {
@@ -257,6 +228,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
         fprintf(stderr, "Could not write mpegts header to first output file\n");
     }
 
+    return Qnil;
     
     //write_index = !write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, last_segment, 0, max_tsfiles);
     
@@ -296,14 +268,22 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             else {
                 remove_file = 0;
             }
-            
+            /*
             Segment *segment = ALLOC(Segment);
             
-            VALUE seg = Data_Wrap_Struct(rb_cAvSegment, 0, segment_free, segment);
+            VALUE seg = Data_Wrap_Struct(rb_cAvSegment, 0, segment_free, segment);*/
+            
+            VALUE seg = rb_obj_alloc(rb_cAvSegment);
+            
+            char *data = calloc(strlen(output_filename), sizeof(char));
+            memcpy(data, output_filename, strlen(output_filename));
+            
+
+            rb_obj_call_init(seg, 0, 0);
             
             rb_iv_set(seg, "@index", INT2FIX(++last_segment));
             rb_iv_set(seg, "@duration",INT2FIX(segment_duration));
-            rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
+            rb_iv_set(seg, "@filename", rb_str_new2(data));
             
             rb_ary_push(sArray, seg);
             
@@ -371,7 +351,6 @@ void Init_segmenter_ext() {
     rb_define_module_function(rb_mAvSegmenter, "segment", segmenter_segment, 3);
     
     rb_cAvSegment = rb_define_class_under(rb_mAvSegmenter, "Segment", rb_cObject);
-    rb_define_singleton_method(rb_cAvSegment, "initialize", segment_init, 3);
     rb_define_alloc_func(rb_cAvSegment, segment_allocate);
     rb_define_attr(rb_cAvSegment, "duration", 1, 1);
     rb_define_attr(rb_cAvSegment, "index", 1, 1);
