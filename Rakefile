@@ -7,7 +7,7 @@ PKG_FILES = FileList[
 
 SPEC = Gem::Specification.new do |s|
 	s.name = "segmenter"
-	s.version = "0.1"
+	s.version = "0.2"
 	s.email = "emil.palm@x86.nu"
 	s.homepage = "http://segmenter.x86.nu"
 	s.summary = "Ruby wrapper for http://svn.assembla.com/svn/legend/segmenter/segmenter.c"
