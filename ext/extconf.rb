@@ -15,8 +15,8 @@ end
 $CFLAGS << " -W -Wall"
 
 if have_library("avformat") and find_header('libavformat/avformat.h') then
-    $objs = %w(av_segmenter.o)
-    create_makefile("av_segmenter/av_segmenter")
+    $objs = %w(segmenter.o)
+    create_makefile("segmenter_ext")
 else
     STDERR.puts "missing library"
     exit 1

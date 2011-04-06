@@ -102,12 +102,12 @@ DISTCLEANDIRS =
 
 extout = 
 extout_prefix = 
-target_prefix = /av_segmenter
+target_prefix = 
 LOCAL_LIBS = 
 LIBS = $(LIBRUBYARG_SHARED) -lavformat  -lpthread -ldl -lobjc 
-SRCS = av_segmenter.c
-OBJS = av_segmenter.o
-TARGET = av_segmenter
+SRCS = segmenter.c
+OBJS = segmenter.o
+TARGET = segmenter_ext
 DLLIB = $(TARGET).bundle
 EXTSTATIC = 
 STATIC_LIB = 
