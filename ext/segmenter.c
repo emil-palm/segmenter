@@ -9,6 +9,7 @@
 #include "ruby.h"
 #include "libavformat/avformat.h"
 #include "libavutil/log.h"
+#include <libgen.h>
 
 static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStream *input_stream) {
     AVCodecContext *input_codec_context;
@@ -68,7 +69,6 @@ static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStr
     
     return output_stream;
 }
-
 
 typedef struct _segment {
     int index;
@@ -218,8 +218,9 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     if (avcodec_open(video_st->codec, codec) < 0) {
         fprintf(stderr, "Could not open video decoder, key frames will not be honored\n");
     }
+    char *folder = dirname(strdup(input));
     
-    snprintf(output_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, output_index++);
+    snprintf(output_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, output_index++);
     if (url_fopen(&oc->pb, output_filename, URL_WRONLY) < 0) {
         fprintf(stderr, "Could not open '%s'\n", output_filename);
     }
@@ -227,8 +228,6 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     if (av_write_header(oc)) {
         fprintf(stderr, "Could not write mpegts header to first output file\n");
     }
-
-    return Qnil;
     
     //write_index = !write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, last_segment, 0, max_tsfiles);
     
@@ -268,13 +267,10 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             else {
                 remove_file = 0;
             }
-            /*
-            Segment *segment = ALLOC(Segment);
             
-            VALUE seg = Data_Wrap_Struct(rb_cAvSegment, 0, segment_free, segment);*/
             
+            // Create Segment object
             VALUE seg = rb_obj_alloc(rb_cAvSegment);
-            
             char *data = calloc(strlen(output_filename), sizeof(char));
             memcpy(data, output_filename, strlen(output_filename));
             
@@ -288,11 +284,13 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             rb_ary_push(sArray, seg);
             
             if (remove_file) {
-                snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
+                snprintf(remove_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, first_segment - 1);
+                //snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
                 remove(remove_filename);
             }
             
-            snprintf(output_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, output_index++);
+//            snprintf(output_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, output_index++);
+            snprintf(output_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, output_index++);
             if (url_fopen(&oc->pb, output_filename, URL_WRONLY) < 0) {
                 fprintf(stderr, "Could not open '%s'\n", output_filename);
                 break;
