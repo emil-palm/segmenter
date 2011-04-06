@@ -84,7 +84,6 @@ static VALUE rb_cAvSegment;
 
 static void segment_free(Segment *segment)
 {
-    fprintf(stderr,"Dealloc");
     if (NULL == segment)
         return;
     
