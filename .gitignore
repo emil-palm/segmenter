@@ -1,4 +1,6 @@
 xcode/**
 pkg/**
+*.gem
+pkg/*.gem
 ext/*.bundle
 ext/bajs.ts
