@@ -1,2 +1,4 @@
 xcode/**
+pkg/**
+ext/*.bundle
 ext/bajs.ts

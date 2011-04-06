@@ -1,7 +1,6 @@
 COPYING
 ext/extconf.rb
 ext/Makefile
-ext/mkmf.log
 ext/segmenter.bundle
 ext/segmenter.c
 ext/segmenter.o

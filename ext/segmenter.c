@@ -365,7 +365,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     return sArray;
 }
 
-void Init_segmenter() {
+void Init_segmenter_ext() {
     rb_mAvSegmenter = rb_define_module("Segmenter");
     rb_define_module_function(rb_mAvSegmenter, "segment", segmenter_segment, 3);
     

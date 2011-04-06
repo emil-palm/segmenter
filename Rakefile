@@ -2,11 +2,11 @@ require 'rake/gempackagetask'
 
 PKG_FILES = FileList[
 	"Rakefile", "COPYING", "NEWS", "README.rdoc",
-	"ext/*.[ch]", "Manifest", "ext/extconf.rb"
+	"ext/*.[ch]", "Manifest", "ext/extconf.rb", "lib/*.rb"
 ]
 
 SPEC = Gem::Specification.new do |s|
-	s.name = "Segmenter"
+	s.name = "segmenter"
 	s.version = "0.1"
 	s.email = "emil.palm@x86.nu"
 	s.homepage = "http://segmenter.x86.nu"
