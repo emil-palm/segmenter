@@ -54,7 +54,7 @@ COUTFLAG = -o
 
 RUBY_EXTCONF_H = 
 cflags   =  $(optflags) $(debugflags) $(warnflags)
-optflags = -O3
+optflags = -O0
 debugflags = -ggdb
 warnflags = -Wextra -Wno-unused-parameter -Wno-parentheses -Wpointer-arith -Wwrite-strings -Wno-missing-field-initializers -Wshorten-64-to-32 -Wno-long-long
 CFLAGS   = -fno-common $(cflags)  -fno-common -pipe -I/opt/local/include -W -Wall 
@@ -74,7 +74,7 @@ EXEEXT =
 RUBY_BASE_NAME = ruby
 RUBY_INSTALL_NAME = ruby
 RUBY_SO_NAME = ruby.1.9.1
-arch = x86_64-darwin10.6.0
+arch = x86_64-darwin10.7.0
 sitearch = $(arch)
 ruby_version = 1.9.1
 ruby = /Users/emil/.rvm/rubies/ruby-1.9.2-p136/bin/ruby

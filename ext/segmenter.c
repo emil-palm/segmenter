@@ -6,10 +6,58 @@
 //  Copyright 2011 none. All rights reserved.
 //
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "ruby.h"
 #include "libavformat/avformat.h"
 #include "libavutil/log.h"
-#include <libgen.h>
+
+
+char * dirname2(const char *path) {
+    static char dname[PATH_MAX];
+    size_t len;
+    const char *endp;
+	
+    /* Empty or NULL string gets treated as "." */
+    if (path == NULL || *path == '\0') {
+        dname[0] = '.';
+        dname[1] = '\0';
+        return (dname);
+    }
+	
+    /* Strip any trailing slashes */
+    endp = path + strlen(path) - 1;
+    while (endp > path && *endp == '/')
+        endp--;
+	
+    /* Find the start of the dir */
+    while (endp > path && *endp != '/')
+        endp--;
+	
+    /* Either the dir is "/" or there are no slashes */
+    if (endp == path) {
+        dname[0] = *endp == '/' ? '/' : '.';
+        dname[1] = '\0';
+        return (dname);
+    } else {
+        /* Move forward past the separating slashes */
+        do {
+            endp--;
+        } while (endp > path && *endp == '/');
+    }
+	
+    len = endp - path + 1;
+    if (len >= sizeof(dname)) {
+        errno = ENAMETOOLONG;
+        return (NULL);
+    }
+    memcpy(dname, path, len);
+    dname[len] = '\0';
+    return (dname);
+}
+
 
 static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStream *input_stream) {
     AVCodecContext *input_codec_context;
@@ -98,12 +146,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     const char *input;
     const char *output_prefix;
     double segment_duration;
-    char *segment_duration_check;
-    const char *index;
-    char *tmp_index;
-    const char *http_prefix;
     long max_tsfiles = 0;
-    char *max_tsfiles_check;
     double prev_segment_time = 0;
     unsigned int output_index = 1;
     AVInputFormat *ifmt;
@@ -119,28 +162,26 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     int audio_index;
     unsigned int first_segment = 1;
     unsigned int last_segment = 0;
-    int write_index = 1;
     int decode_done;
-    char *dot;
     int ret;
-    int i;
+    unsigned int i;
     int remove_file;
     
     VALUE sArray = rb_ary_new();
-
     av_register_all();
     av_log_set_level(AV_LOG_PANIC);
 
     input = RSTRING_PTR(input_);
     output_prefix = RSTRING_PTR(output_prefix_);
     segment_duration = (FIX2LONG(duration_) - 1);
+    char *folder = dirname2(strdup(input));
     
     remove_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
     if (!remove_filename) {
         rb_raise(rb_eNoMemError, "Could not allocate space for remove filenames");
     }
     
-    output_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
+    output_filename = malloc(sizeof(char) * (strlen(output_prefix) + strlen(folder) + 15));
     if (!output_filename) {
         rb_raise(rb_eNoMemError, "Could not allocate space for output filenames");
     }
@@ -192,12 +233,9 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
                 break;
         }
     }
-      
     if (av_set_parameters(oc, NULL) < 0) {
         rb_raise(rb_eException, "Invalid output format parameters");
     }
-    
-    
     
     dump_format(oc, 0, output_prefix, 1);
     
@@ -209,7 +247,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     if (avcodec_open(video_st->codec, codec) < 0) {
         rb_raise(rb_eException, "Could not open video decoder, key frames will not be honored");
     }
-    char *folder = dirname(strdup(input));
+    
     
     snprintf(output_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, output_index++);
     if (url_fopen(&oc->pb, output_filename, URL_WRONLY) < 0) {
@@ -225,14 +263,14 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     do {
         double segment_time;
         AVPacket packet;
-        
+        av_init_packet(&packet);
         decode_done = av_read_frame(ic, &packet);
         if (decode_done < 0) {
             break;
         }
         
         if (av_dup_packet(&packet) < 0) {
-            //rb_raise(rb_eException, "Could not duplicate packet");
+            rb_raise(rb_eException, "Could not duplicate packet");
             av_free_packet(&packet);
             break;
         }
@@ -246,7 +284,6 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
         else {
             segment_time = prev_segment_time;
         }
-        
         if (segment_time - prev_segment_time >= segment_duration) {
             put_flush_packet(oc->pb);
             url_fclose(oc->pb);
@@ -261,16 +298,12 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             
             
             // Create Segment object
-            VALUE seg = rb_obj_alloc(rb_cAvSegment);
-            char *data = calloc(strlen(output_filename), sizeof(char));
-            memcpy(data, output_filename, strlen(output_filename));
-            
+            VALUE seg = rb_obj_alloc(rb_cAvSegment);            
 
             rb_obj_call_init(seg, 0, 0);
-            
             rb_iv_set(seg, "@index", INT2FIX(++last_segment));
             rb_iv_set(seg, "@duration",INT2FIX(segment_duration));
-            rb_iv_set(seg, "@filename", rb_str_new2(data));
+            rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
             
             rb_ary_push(sArray, seg);
             
@@ -295,7 +328,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             fprintf(stderr, "Warning: Could not write frame of stream\n");
         }
         else if (ret > 0) {
-            //fprintf(stderr, "End of stream requested\n");
+            fprintf(stderr, "End of stream requested\n");
             av_free_packet(&packet);
             break;
         }
@@ -328,10 +361,12 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
    // }
     
     if (remove_file) {
-        snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
+        snprintf(remove_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, first_segment - 1);
+//        snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
         remove(remove_filename);
     }
-    
+    fprintf(stderr,"BAJS BAJS");
+    rb_ary_push(sArray, Qnil);
     return sArray;
 }
 
