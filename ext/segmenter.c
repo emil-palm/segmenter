@@ -93,13 +93,6 @@ static void segment_free(Segment *segment)
     ruby_xfree(segment);
 }
 
-static VALUE segment_allocate (VALUE klass)
-{
-    
-    Segment *s = ALLOC(Segment);  
-	return Data_Wrap_Struct (klass, NULL, segment_free, s);
-}
-
 static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, VALUE duration_ ) {
 
     const char *input;
@@ -144,38 +137,37 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     
     remove_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
     if (!remove_filename) {
-        fprintf(stderr, "Could not allocate space for remove filenames\n");
-        exit(1);
+        rb_raise(rb_eNoMemError, "Could not allocate space for remove filenames");
     }
     
     output_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
     if (!output_filename) {
-        fprintf(stderr, "Could not allocate space for output filenames\n");
+        rb_raise(rb_eNoMemError, "Could not allocate space for output filenames");
     }
     
         
     ifmt = av_find_input_format("mpegts");
     if (!ifmt) {
-        fprintf(stderr, "Could not find MPEG-TS demuxer\n");
+        rb_raise(rb_eException, "Could not find MPEG-TS demuxer");
     }
     
     ret = av_open_input_file(&ic, input, ifmt, 0, NULL);
     if (ret != 0) {
-        fprintf(stderr, "Could not open input file, make sure it is an mpegts file: %d %s\n", ret, input);
+        rb_raise(rb_eException, "Could not open input file, make sure it is an mpegts file: %d %s", ret, input);
     }
     
     if (av_find_stream_info(ic) < 0) {
-        fprintf(stderr, "Could not read stream information\n");
+        rb_raise(rb_eException, "Could not read stream information");
     }
     
     ofmt = guess_format("mpegts", NULL, NULL);
     if (!ofmt) {
-        fprintf(stderr, "Could not find MPEG-TS muxer\n");
+        rb_raise(rb_eException, "Could not find MPEG-TS muxer");
     }
     
     oc = avformat_alloc_context();
     if (!oc) {
-        fprintf(stderr, "Could not allocated output context");
+        rb_raise(rb_eException, "Could not allocated output context");
     }
     oc->oformat = ofmt;
 
@@ -202,7 +194,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     }
       
     if (av_set_parameters(oc, NULL) < 0) {
-        fprintf(stderr, "Invalid output format parameters\n");
+        rb_raise(rb_eException, "Invalid output format parameters");
     }
     
     
@@ -211,21 +203,21 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     
     codec = avcodec_find_decoder(video_st->codec->codec_id);
     if (!codec) {
-        fprintf(stderr, "Could not find video decoder, key frames will not be honored\n");
+        rb_raise(rb_eException, "Could not find video decoder, key frames will not be honored");
     }
     
     if (avcodec_open(video_st->codec, codec) < 0) {
-        fprintf(stderr, "Could not open video decoder, key frames will not be honored\n");
+        rb_raise(rb_eException, "Could not open video decoder, key frames will not be honored");
     }
     char *folder = dirname(strdup(input));
     
     snprintf(output_filename, strlen(output_prefix) + strlen(folder) + 15, "%s/%s-%u.ts", folder, output_prefix, output_index++);
     if (url_fopen(&oc->pb, output_filename, URL_WRONLY) < 0) {
-        fprintf(stderr, "Could not open '%s'\n", output_filename);
+        rb_raise(rb_eException, "Could not open '%s'", output_filename);
     }
     
     if (av_write_header(oc)) {
-        fprintf(stderr, "Could not write mpegts header to first output file\n");
+        rb_raise(rb_eException, "Could not write mpegts header to first output file");
     }
     
     //write_index = !write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, last_segment, 0, max_tsfiles);
@@ -240,7 +232,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
         }
         
         if (av_dup_packet(&packet) < 0) {
-            fprintf(stderr, "Could not duplicate packet");
+            //rb_raise(rb_eException, "Could not duplicate packet");
             av_free_packet(&packet);
             break;
         }
@@ -303,7 +295,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             fprintf(stderr, "Warning: Could not write frame of stream\n");
         }
         else if (ret > 0) {
-            fprintf(stderr, "End of stream requested\n");
+            //fprintf(stderr, "End of stream requested\n");
             av_free_packet(&packet);
             break;
         }
@@ -348,7 +340,6 @@ void Init_segmenter_ext() {
     rb_define_module_function(rb_mAvSegmenter, "segment", segmenter_segment, 3);
     
     rb_cAvSegment = rb_define_class_under(rb_mAvSegmenter, "Segment", rb_cObject);
-    rb_define_alloc_func(rb_cAvSegment, segment_allocate);
     rb_define_attr(rb_cAvSegment, "duration", 1, 1);
     rb_define_attr(rb_cAvSegment, "index", 1, 1);
     rb_define_attr(rb_cAvSegment, "filename", 1, 1);
