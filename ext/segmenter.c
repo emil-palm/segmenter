@@ -365,8 +365,6 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
 //        snprintf(remove_filename, strlen(output_prefix) + 15, "%s-%u.ts", output_prefix, first_segment - 1);
         remove(remove_filename);
     }
-    fprintf(stderr,"BAJS BAJS");
-    rb_ary_push(sArray, Qnil);
     return sArray;
 }
 
