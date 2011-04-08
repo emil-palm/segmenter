@@ -4,11 +4,11 @@ SHELL = /bin/sh
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /Users/emil/.rvm/rubies/ruby-1.9.2-p136/include/ruby-1.9.1
-hdrdir = /Users/emil/.rvm/rubies/ruby-1.9.2-p136/include/ruby-1.9.1
-arch_hdrdir = /Users/emil/.rvm/rubies/ruby-1.9.2-p136/include/ruby-1.9.1/$(arch)
+topdir = /usr/local/rvm/rubies/ruby-1.9.2-p180/include/ruby-1.9.1
+hdrdir = /usr/local/rvm/rubies/ruby-1.9.2-p180/include/ruby-1.9.1
+arch_hdrdir = /usr/local/rvm/rubies/ruby-1.9.2-p180/include/ruby-1.9.1/$(arch)
 VPATH = $(srcdir):$(arch_hdrdir)/ruby:$(hdrdir)/ruby
-prefix = $(DESTDIR)/Users/emil/.rvm/rubies/ruby-1.9.2-p136
+prefix = $(DESTDIR)/usr/local/rvm/rubies/ruby-1.9.2-p180
 rubylibprefix = $(libdir)/$(RUBY_BASE_NAME)
 exec_prefix = $(prefix)
 vendorhdrdir = $(rubyhdrdir)/vendor_ruby
@@ -54,7 +54,7 @@ COUTFLAG = -o
 
 RUBY_EXTCONF_H = 
 cflags   =  $(optflags) $(debugflags) $(warnflags)
-optflags = -O0
+optflags = -O3
 debugflags = -ggdb
 warnflags = -Wextra -Wno-unused-parameter -Wno-parentheses -Wpointer-arith -Wwrite-strings -Wno-missing-field-initializers -Wshorten-64-to-32 -Wno-long-long
 CFLAGS   = -fno-common $(cflags)  -fno-common -pipe -I/opt/local/include -W -Wall 
@@ -77,7 +77,7 @@ RUBY_SO_NAME = ruby.1.9.1
 arch = x86_64-darwin10.7.0
 sitearch = $(arch)
 ruby_version = 1.9.1
-ruby = /Users/emil/.rvm/rubies/ruby-1.9.2-p136/bin/ruby
+ruby = /usr/local/rvm/rubies/ruby-1.9.2-p180/bin/ruby
 RUBY = $(ruby)
 RM = rm -f
 RM_RF = $(RUBY) -run -e rm -- -rf
