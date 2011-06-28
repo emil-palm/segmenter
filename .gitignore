@@ -4,3 +4,4 @@ pkg/**
 pkg/*.gem
 ext/*.bundle
 ext/bajs.ts
+ext/*.ts

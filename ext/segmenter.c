@@ -468,7 +468,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
 
     const char *input;
     const char *output_prefix;
-    double segment_duration;
+    int segment_duration;
     long max_tsfiles = 0;
     double prev_segment_time = 0;
     unsigned int output_index = 1;
@@ -496,7 +496,8 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
 
     input = RSTRING_PTR(input_);
     output_prefix = RSTRING_PTR(output_prefix_);
-    segment_duration = (FIX2LONG(duration_) - 1);
+    segment_duration = (FIX2INT(duration_));
+	
     char *folder = dirname2(strdup(input));
     
     remove_filename = malloc(sizeof(char) * (strlen(output_prefix) + 15));
@@ -591,8 +592,9 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     //write_index = !write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, last_segment, 0, max_tsfiles);
     int64_t initial_audio_pts = -1;
     int64_t initial_video_pts = -1;
+	double segment_time;
     do {
-        double segment_time;
+		
         AVPacket packet;
         //av_init_packet(&packet);
         decode_done = av_read_frame(ic, &packet);
@@ -623,9 +625,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
             segment_time = prev_segment_time;
             segment_time = prev_segment_time;
         }
-        
         if (segment_time - prev_segment_time >= segment_duration) {
-            
             put_flush_packet(oc->pb);
             url_fclose(oc->pb);
             
@@ -643,7 +643,7 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
 
             rb_obj_call_init(seg, 0, 0);
             rb_iv_set(seg, "@index", INT2FIX(++last_segment));
-            rb_iv_set(seg, "@duration",INT2FIX(segment_duration));
+            rb_iv_set(seg, "@duration",INT2FIX((int)floor((segment_time - prev_segment_time))));
             rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
             
             rb_ary_push(sArray, seg);
@@ -698,14 +698,14 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
     }
     
     // Create Segment object
-    VALUE seg = rb_obj_alloc(rb_cAvSegment);            
-    
-    rb_obj_call_init(seg, 0, 0);
-    rb_iv_set(seg, "@index", INT2FIX(++last_segment));
-    rb_iv_set(seg, "@duration",INT2FIX(segment_duration));
-    rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
-    
-    rb_ary_push(sArray, seg);
+	//     VALUE seg = rb_obj_alloc(rb_cAvSegment);            
+	//     
+	//     rb_obj_call_init(seg, 0, 0);
+	//     rb_iv_set(seg, "@index", INT2FIX(++last_segment));
+	// rb_iv_set(seg, "@duration",INT2FIX((int)floor((segment_time - prev_segment_time))));
+	//     rb_iv_set(seg, "@filename", rb_str_new2(output_filename));
+	//     
+	//     rb_ary_push(sArray, seg);
     
     //if (write_index) {
     //    write_index_file(index, tmp_index, segment_duration, output_prefix, http_prefix, first_segment, ++last_segment, 1, max_tsfiles);
