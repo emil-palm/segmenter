@@ -1,23 +1,64 @@
-require 'rake/gempackagetask'
+# encoding: utf-8
 
-PKG_FILES = FileList[
-	"Rakefile", "COPYING", "NEWS", "README.rdoc",
-	"ext/*.[ch]", "Manifest", "ext/extconf.rb", "lib/*.rb"
-]
+require 'rubygems'
+require 'rake'
 
-SPEC = Gem::Specification.new do |s|
-	s.name = "segmenter"
-	s.version = "0.6"
-	s.email = "emil.palm@x86.nu"
-	s.homepage = "http://segmenter.x86.nu"
-	s.summary = "Ruby wrapper for http://svn.assembla.com/svn/legend/segmenter/segmenter.c"
-	s.files = PKG_FILES
-	s.required_ruby_version = '>= 1.8.1'
-	s.extensions = "ext/extconf.rb"
-	s.author = "Emil Palm"
+require 'jeweler'
+Jeweler::Tasks.new do |gem|
+  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
+  gem.name = "segmenter"
+  gem.homepage = "http://github.com/mrevilme/segmenter"
+  gem.license = "MIT"
+  gem.summary = %Q{TODO: one-line summary of your gem}
+  gem.description = %Q{TODO: longer description of your gem}
+  gem.email = "emil@x86.nu"
+  gem.authors = ["Emil Palm"]
+  # Include your dependencies below. Runtime dependencies are required when using your gem,
+  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
+  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency "shoulda", ">= 0"
+  # Include your dependencies below. Runtime dependencies are required when using your gem,
+  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
+  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency "bundler", "~> 1.0.0"
+  # Include your dependencies below. Runtime dependencies are required when using your gem,
+  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
+  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency "jeweler", "~> 1.6.3"
+  # Include your dependencies below. Runtime dependencies are required when using your gem,
+  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
+  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency "rcov", ">= 0"
+end
+Jeweler::RubygemsDotOrgTasks.new
+
+require 'rake/testtask'
+Rake::TestTask.new(:test) do |test|
+  test.libs << 'lib' << 'test'
+  test.pattern = 'test/**/test_*.rb'
+  test.verbose = true
 end
 
-Rake::GemPackageTask.new(SPEC) do |pkg|
-pkg.need_tar = true
-pkg.need_zip = true
+require 'rcov/rcovtask'
+Rcov::RcovTask.new do |test|
+  test.libs << 'test'
+  test.pattern = 'test/**/test_*.rb'
+  test.verbose = true
+  test.rcov_opts << '--exclude "gems/*"'
+end
+
+task :default => :test
+
+require 'rake/rdoctask'
+Rake::RDocTask.new do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "segmenter #{version}"
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
