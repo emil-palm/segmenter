@@ -279,6 +279,24 @@ static VALUE segmenter_segment(VALUE klass, VALUE input_, VALUE output_prefix_, 
 
 
 	if (!soundOnly) {
+		if(video_st == NULL) {
+			fprintf(stderr, "video_st is fail\n");
+			rb_raise(rb_eException, "video_st fail");
+			exit(1);
+		}
+
+		if(video_st->codec == NULL) {
+			fprintf(stderr,"codec is fail\n");
+			rb_raise(rb_eException, "codec fail");
+			exit(1);
+		}
+
+		if(video_st->codec->codec_id == NULL) {
+			fprintf(stderr, "codec_id is fail\n");
+			rb_raise(rb_eException, "codec fail");
+			exit(1);
+		}
+
 		codec = avcodec_find_decoder(video_st->codec->codec_id);
 	    if (!codec) {
 	        rb_raise(rb_eException, "Could not find video decoder, key frames will not be honored");
